@@ -1,6 +1,16 @@
 [package]
-name = "backend_reference_impl"
+name = "backend_core"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "backend_core"
+
 [dependencies]
+actix-web = "4.12.1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"]}
+reqwest = "0.13.1"
