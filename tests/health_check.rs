@@ -1,23 +1,6 @@
 use std::net::TcpListener;
 
-#[tokio::test]
-async fn health_check_works() {
-    //arange
-    let address = spawn_app();
-    let client = reqwest::Client::new();
-
-    //act
-    let response = client
-        .get(format!("{}/health_check", address))
-        .send()
-        .await
-        .expect("Failed to execute request.");
-
-    // assert
-    assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
-}
-
+// Spins up an application instance on a free port, and returns the port.
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
     let port = listener.local_addr().unwrap().port();
@@ -29,4 +12,73 @@ fn spawn_app() -> String {
     //return application address to caller
 
     format!("http://127.0.0.1:{}", port)
+}
+
+#[tokio::test]
+async fn health_check_works() {
+    //arange
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+
+    //act
+    let response = client
+        .get(format!("{}/health_check", app_address))
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    // assert
+    assert!(response.status().is_success());
+    assert_eq!(Some(0), response.content_length());
+}
+
+#[tokio::test]
+async fn subscribe_returns_a_200_for_valid_form_data() {
+    // Arrange
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+
+    //Act
+    // name = le guin, email = ursula_le_guin@gmail.com
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    let response = client
+        .post(format!("{}/subscriptions", app_address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to send request");
+
+    // Assert
+    assert_eq!(200, response.status().as_u16());
+}
+
+#[tokio::test]
+async fn subscribe_returns_a_400_when_data_is_missing() {
+    // Arrange
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        ("name=le%20guin", "missing the email"),
+        ("email=ursula_le_guin%40gmail.com", "missing the name"),
+    ];
+
+    for (invalid_body, error_message) in test_cases {
+        // Act
+        let response = client
+            .post(format!("{}/subscriptions", app_address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(invalid_body)
+            .send()
+            .await
+            .expect("Failed to send request");
+
+        // Assert
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad Request when the payload was {}.",
+            error_message
+        );
+    }
 }
