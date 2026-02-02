@@ -15,7 +15,11 @@ Cargo tools:
 
   # Database storage
 
-  run a postgres instance with $scripts/init_db.sh
-  docker ps, to see if running
+  run a postgres instance with $./scripts/init_db.sh
+  docker ps, to see if running,
+  to run migrations against existing postgres container, use SKIP_DOCKER flag:
+  $ SKIP_DOCKER=true ./scripts/init_db.sh
 
   sqlx is used as a bridge between our rust code and PostgreSQL,
+
+  $dbeaver to open graphical view of database

@@ -2,7 +2,11 @@
 set -x
 set -eo pipefail
 
-
+# ensure psql is installed
+if ! [ -x "$(command -v psql)" ]; then
+  echo >&2 "Error: psql is not installed."
+  exit 1
+fi
 
 # ensure sqlx is installed
 if ! [ -x "$(command -v sqlx)" ]; then
@@ -24,15 +28,18 @@ DB_PORT="${POSTGRES_PORT:=5432}"
 # Check if a custom host has been set otherwise set to localhost
 DB_HOST="${POSTGRES_HOST:=localhost}"
 
-#launch postgres using Docker
-docker run \
-  -e POSTGRES_USER=${DB_USER} \
-  -e POSTGRES_PASSWORD=${DB_PASSWORD} \
-  -e POSTGRES_DB=${DB_NAME} \
-  -p "${DB_PORT}":5432 \
-  -d postgres \
-  postgres -N 1000
-# increased maximum of connections due to testing 
+# Allow to skip docker if a dockerized postgres database is already running
+if [[ -z "${SKIP_DOCKER}" ]]
+then
+  docker run \
+    -e POSTGRES_USER=${DB_USER} \
+    -e POSTGRES_PASSWORD=${DB_PASSWORD} \
+    -e POSTGRES_DB=${DB_NAME} \
+    -p "${DB_PORT}":5432 \
+    -d postgres \
+    postgres -N 1000
+    # increased maximum of connections due to testing 
+fi
 
 # Keep pinging postgres until it's ready to accept commands
 export PGPASSWORD="$DB_PASSWORD"
@@ -48,3 +55,5 @@ done
 DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 export DATABASE_URL
 sqlx database create
+sqlx migrate run
+>&2 echo "Postgres has been migrated, ready to go!"
