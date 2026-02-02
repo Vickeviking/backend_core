@@ -12,3 +12,8 @@ Cargo tools:
   fails if a commit contains unformatted code
 - cargo-audit: cargo audit
   checks dependency tree for reported vulnerabilities on crates.io
+
+  # Database storage
+
+  run a postgres instance with $scripts/init_db.sh
+  docker ps, to see if running
