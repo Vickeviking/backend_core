@@ -17,3 +17,5 @@ Cargo tools:
 
   run a postgres instance with $scripts/init_db.sh
   docker ps, to see if running
+
+  sqlx is used as a bridge between our rust code and PostgreSQL,
