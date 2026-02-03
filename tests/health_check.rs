@@ -1,3 +1,4 @@
+use backend_core::startup;
 use std::net::TcpListener;
 
 // Spins up an application instance on a free port, and returns the port.
@@ -5,7 +6,7 @@ fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
     let port = listener.local_addr().unwrap().port();
 
-    let server = backend_core::run(listener).expect("Failed to bind address");
+    let server = startup::run(listener).expect("Failed to bind address");
 
     #[allow(clippy::let_underscore_future)]
     let _ = tokio::spawn(server);
