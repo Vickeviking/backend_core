@@ -23,3 +23,12 @@ Cargo tools:
   sqlx is used as a bridge between our rust code and PostgreSQL,
 
   $dbeaver to open graphical view of database
+
+  # Before commit
+
+  cargo fmt
+  cargo fmt --check
+  cargo clippy
+  cargo audit
+  cargo sqlx prepare --workspace -- --all-targets
+  cargo sqlx prepare --workspace --check
