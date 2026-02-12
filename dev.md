@@ -12,6 +12,7 @@ Cargo tools:
   fails if a commit contains unformatted code
 - cargo-audit: cargo audit
   checks dependency tree for reported vulnerabilities on crates.io
+- cargo-udeps: cargo +nightly udeps
 
   # Database storage
 
@@ -32,3 +33,11 @@ Cargo tools:
   cargo audit
   cargo sqlx prepare --workspace -- --all-targets
   cargo sqlx prepare --workspace --check
+
+  # manual http fire
+
+  curl -i -X POST -d 'email=thomas_wiman@hotmail.com&name=Tom' http://127.0.0.1:8000/subscriptions
+
+  # logging
+
+  tracing spans are used, with different layers and json formatting, ElasticSearch could be used to query loggs
