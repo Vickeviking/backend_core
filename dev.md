@@ -41,3 +41,7 @@ Cargo tools:
   # logging
 
   tracing spans are used, with different layers and json formatting, ElasticSearch could be used to query loggs
+
+  ## observe test logs
+
+  TEST_LOG=true cargo test health_check_works | bunyan
