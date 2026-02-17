@@ -1,0 +1,22 @@
+.env
+target/
+tests/
+Dockerfile
+scripts/
+migrations/
+
+# documentation
+**/*.md
+!README.md
+
+
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+#logs
+*.log
