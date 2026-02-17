@@ -45,3 +45,11 @@ Cargo tools:
   ## observe test logs
 
   TEST_LOG=true cargo test health_check_works | bunyan
+
+  ## Deployment
+
+  ### Docker
+  - build:
+    docker build --tag backend_core --file Dockerfile .
+  - run:
+    docker run -p 8000:8000 backend_core
