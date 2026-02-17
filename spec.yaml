@@ -1,0 +1,50 @@
+name: backend-core
+
+region: fra1
+services:
+  - name: backend-core
+    #relative to repo root
+    dockerfile_path: Dockerfile
+    source_dir: .
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: Vickeviking/backend_core
+    health_check:
+      http_path: /health_check
+    # should match configuration/production.yaml
+    http_port: 8000
+    # here we can scale up, but to keep bill low , keep at 1
+    instance_count: 1
+    instance_size_slug: basic-xxs
+
+    routes:
+      - path: /
+
+    envs:
+      - key: APP_DATABASE__USERNAME
+        scope: RUN_TIME
+        value: ${backendcore-db.USERNAME}
+      - key: APP_DATABASE__PASSWORD
+        scope: RUN_TIME
+        value: ${backendcore-db.PASSWORD}
+      - key: APP_DATABASE__HOST
+        scope: RUN_TIME
+        value: ${backendcore-db.HOSTNAME}
+      - key: APP_DATABASE__PORT
+        scope: RUN_TIME
+        value: ${backendcore-db.PORT}
+      - key: APP_DATABASE__DATABASE_NAME
+        scope: RUN_TIME
+        value: ${backendcore-db.DATABASE}
+
+databases:
+  #Postgres
+  - engine: PG
+    #Db name
+    name: backendcore-db
+    # keeping bill small
+    num_nodes: 1
+    size: db-s-dev-database
+    # PG version
+    version: "16"
