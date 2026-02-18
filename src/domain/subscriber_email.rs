@@ -50,7 +50,7 @@ mod tests {
 
     impl quickcheck::Arbitrary for ValidEmailFixture {
         fn arbitrary(_g: &mut quickcheck::Gen) -> Self {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             let email = SafeEmail().fake_with_rng(&mut rng);
             Self(email)
         }
