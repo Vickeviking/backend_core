@@ -39,3 +39,8 @@ validator = "0.20"
 
 [dev-dependencies]
 once_cell = "1"
+fake = "4.0"
+#prop testing, run test multiple times, and shrinks failing case
+quickcheck = "1"
+quickcheck_macros = "1"
+rand = "0.9" #fake 4.0 needs this version, used by quickcheck aswell
