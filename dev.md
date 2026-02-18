@@ -46,19 +46,23 @@ Cargo tools:
 
   TEST_LOG=true cargo test health_check_works | bunyan
 
-  ## Deployment
-
   ### Docker
   - build:
     docker build --tag backend_core --file Dockerfile .
   - run:
     docker run -p 8000:8000 backend_core
 
+  ## Deployment
+
   ## doctl
 
   Archive on web to avoid costs.
 
   Commands
+
+  # from root dir
+  - create app
+    doctl apps create --spec.yaml
   - list
     doctl apps list
   - update app specification based on spec.yaml
