@@ -51,25 +51,3 @@ Cargo tools:
     docker build --tag backend_core --file Dockerfile .
   - run:
     docker run -p 8000:8000 backend_core
-
-  ## Deployment
-
-  ## doctl
-
-  Archive on web to avoid costs.
-
-  Commands
-
-  # from root dir
-  - create app
-    doctl apps create --spec.yaml
-  - list
-    doctl apps list
-  - update app specification based on spec.yaml
-    doctl apps update YOUR-APP-ID --spec=spec.yaml
-
-  ## getting it to work
-  - update app if something changed,
-  - push to github
-  - migrate database
-    DATABASE_URL=YOUR_DIGITAL_OCEAN_COONNECTION_STRING sqlx migrate run
