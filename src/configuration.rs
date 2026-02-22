@@ -2,9 +2,9 @@ use crate::domain::SubscriberEmail;
 use secrecy::ExposeSecret;
 use secrecy::SecretString;
 use serde_aux::field_attributes::deserialize_number_from_string;
+use sqlx::ConnectOptions;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgSslMode;
-use sqlx::ConnectOptions;
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
@@ -57,6 +57,7 @@ impl DatabaseSettings {
 pub struct EmailClientSettings {
     pub base_url: String,
     pub sender_email: String,
+    pub authorization_token: SecretString,
 }
 
 impl EmailClientSettings {
