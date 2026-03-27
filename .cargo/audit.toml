@@ -1,0 +1,4 @@
+[advisories]
+# SQLx 0.8 uses weak features that can leave unused drivers in Cargo.lock.
+# We only build the Postgres driver here, which `cargo tree` confirms.
+ignore = ["RUSTSEC-2023-0071"]

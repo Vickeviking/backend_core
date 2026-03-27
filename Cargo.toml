@@ -37,7 +37,7 @@ unicode-segmentation = "1"
 validator = "0.20"
 
 [dependencies.reqwest]
-version = "0.11"
+version = "0.12"
 default-features = false
 features = ["json", "rustls-tls"]
 
@@ -49,5 +49,5 @@ tokio = { version = "1", features = ["macros", "rt"]}
 quickcheck = "1"
 quickcheck_macros = "1"
 rand = "0.9" #fake 4.0 needs this version, used by quickcheck aswell
-wiremock = "0.5" #Inercept http request to check target address and headers among others
+wiremock = "0.6" #Inercept http request to check target address and headers among others
 serde_json = "1"
