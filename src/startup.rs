@@ -1,11 +1,42 @@
+use crate::configuration::Settings;
 use crate::email_client::EmailClient;
 use crate::routes::{health_check, subscribe};
 use actix_web::dev::Server;
-use actix_web::{App, HttpServer, web};
+use actix_web::{web, App, HttpServer};
+use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
+/// Builds the application server from [`Settings`].
+/// Used by the binary entry point to create the listener, database pool,
+/// and email client before delegating to [`run`].
+pub async fn build(configuration: Settings) -> Result<Server, std::io::Error> {
+    let connection_pool = PgPoolOptions::new().connect_lazy_with(configuration.database.with_db());
+
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email.");
+    let timeout = configuration.email_client.timeout();
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+        timeout,
+    );
+
+    let address = format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    );
+    let listener = TcpListener::bind(address)?;
+    run(listener, connection_pool, email_client)
+}
+
+/// Runs the HTTP server with pre-built infrastructure.
+/// Tests call this directly so they can inject a random listener, an isolated
+/// database pool, and a test email client.
 pub fn run(
     listener: TcpListener,
     db_pool: PgPool,
