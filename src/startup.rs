@@ -2,22 +2,24 @@ use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
 use crate::routes::{health_check, subscribe};
 use actix_web::dev::Server;
-use actix_web::{web, App, HttpServer};
-use sqlx::postgres::PgPoolOptions;
+use actix_web::{App, HttpServer, web};
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
-/// Holds on to the application port, allowing for later retrieval
+/// Owns the bound HTTP server together with the port it listens on.
+/// The binary awaits it directly, while tests read the assigned port
+/// after binding to `0` and before the server is spawned.
 pub struct Application {
     port: u16,
     server: Server,
 }
 
 impl Application {
-    /// Builds the application server from [`Settings`].
-    /// Used by the binary entry point to create the listener, database pool,
-    /// and email client before delegating to [`run`].
+    /// Builds the application from [`Settings`] and binds its TCP listener.
+    /// This creates the database pool and email client, then delegates to
+    /// [`run`] to construct the Actix server with those dependencies.
     pub async fn build(configuration: Settings) -> Result<Self, std::io::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
 
@@ -45,22 +47,31 @@ impl Application {
         Ok(Self { port, server })
     }
 
+    /// Returns the port the listener was bound to.
+    /// Tests use this after requesting port `0` so they can build the base
+    /// URL before the server future is handed off to Tokio.
     pub fn port(&self) -> u16 {
         self.port
     }
 
+    /// Consumes the application and awaits the underlying Actix server.
+    /// This is the main process path in production and the future tests
+    /// spawn in the background once setup is complete.
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         self.server.await
     }
 }
 
+/// Creates a lazily connected Postgres pool for the configured database.
+/// Production startup and test helpers both reuse this so request handlers
+/// talk to the same database that was configured for that environment.
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
     PgPoolOptions::new().connect_lazy_with(configuration.with_db())
 }
 
-/// Runs the HTTP server with pre-built infrastructure.
-/// Tests call this directly so they can inject a random listener, an isolated
-/// database pool, and a test email client.
+/// Constructs and starts the HTTP server from pre-built infrastructure.
+/// Keeping this separate from [`Application::build`] lets tests inject
+/// their own listener, database pool, and email client when needed.
 pub fn run(
     listener: TcpListener,
     db_pool: PgPool,
