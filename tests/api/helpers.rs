@@ -1,12 +1,13 @@
-use backend_core::configuration::{get_configuration, DatabaseSettings};
-use backend_core::email_client::EmailClient;
-use backend_core::startup;
+use backend_core::configuration::{DatabaseSettings, get_configuration};
+use backend_core::startup::{Application, get_connection_pool};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use std::net::TcpListener;
 use uuid::Uuid;
 
+/// Initializes tracing once for the whole integration test process.
+/// `TEST_LOG` switches output to stdout; otherwise logs are discarded to keep
+/// normal test runs quiet.
 static TRACING: Lazy<()> = Lazy::new(|| {
     let default_filter_level = "info".to_string();
     let subscriber_name = "test".to_string();
@@ -20,49 +21,53 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     }
 });
 
+/// Handles exposed to each integration test after booting the application.
+/// `address` is the HTTP base URL, while `db_pool` lets tests inspect the
+/// database state directly when asserting side effects.
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
 
-/// Spins up an application instance on a free port, and returns a `TestApp`.
+/// Boots a fresh application instance for one integration test.
+/// The helper initializes tracing once, provisions an isolated database,
+/// starts the server on a random port, and returns the handles tests need.
 pub async fn spawn_app() -> TestApp {
+    // Executed once by first invocation
     Lazy::force(&TRACING);
 
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
-    let port = listener.local_addr().unwrap().port();
-    let address = format!("http://127.0.0.1:{}", port);
+    // randomize configuration to ensure test isolation
+    let configuration = {
+        let mut c = get_configuration().expect("Failed to read configuration.");
+        // Different database for each testcase
+        c.database.database_name = Uuid::new_v4().to_string();
+        c.application.port = 0;
+        c
+    };
 
-    let mut configuration = get_configuration().expect("Failed to read configuration");
-    // give database a new random name for test isolation
-    configuration.database.database_name = Uuid::new_v4().to_string();
+    // Create and migrate the database
+    configure_database(&configuration.database).await;
 
-    let connection_pool = configure_database(&configuration.database).await;
+    // Launch the application as the background task
+    let application = Application::build(configuration.clone())
+        .await
+        .expect("Failed to build application.");
 
-    let sender_email = configuration
-        .email_client
-        .sender()
-        .expect("Invalid sender email.");
-    let timeout = configuration.email_client.timeout();
-    let email_client = EmailClient::new(
-        configuration.email_client.base_url,
-        sender_email,
-        configuration.email_client.authorization_token,
-        timeout,
-    );
-
-    let server = startup::run(listener, connection_pool.clone(), email_client)
-        .expect("Failed to bind address");
+    // retrieve port before spawning application
+    let address = format!("http://127.0.0.1:{}", application.port());
 
     #[allow(clippy::let_underscore_future)]
-    let _ = tokio::spawn(server);
+    let _ = tokio::spawn(application.run_until_stopped());
 
     TestApp {
         address,
-        db_pool: connection_pool,
+        db_pool: get_connection_pool(&configuration.database),
     }
 }
 
+/// Creates a brand-new database for the current test and runs migrations.
+/// Returning the pool gives the test a handle into the same isolated database
+/// the application will use after startup.
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
     let mut connection = PgConnection::connect_with(&config.without_db())

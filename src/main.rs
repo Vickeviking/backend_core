@@ -1,4 +1,4 @@
-use backend_core::startup::build;
+use backend_core::startup::Application;
 use backend_core::telemetry::init_subscriber;
 use backend_core::{configuration::get_configuration, telemetry::get_subscriber};
 
@@ -8,9 +8,7 @@ async fn main() -> Result<(), std::io::Error> {
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to read configuration.");
-
-    let server = build(configuration).await?;
-    server.await?;
-
+    let application = Application::build(configuration).await?;
+    application.run_until_stopped().await?;
     Ok(())
 }
