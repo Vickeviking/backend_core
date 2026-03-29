@@ -29,6 +29,18 @@ pub struct TestApp {
     pub db_pool: PgPool,
 }
 
+impl TestApp {
+    pub async fn post_subscription(&self, body: String) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(format!("{}/subscriptions", &self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to send request")
+    }
+}
+
 /// Boots a fresh application instance for one integration test.
 /// The helper initializes tracing once, provisions an isolated database,
 /// starts the server on a random port, and returns the handles tests need.
