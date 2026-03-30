@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use chrono::Utc;
 use sqlx::PgPool;
 use unicode_segmentation::UnicodeSegmentation;
