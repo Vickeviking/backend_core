@@ -1,5 +1,5 @@
-use backend_core::configuration::{DatabaseSettings, get_configuration};
-use backend_core::startup::{Application, get_connection_pool};
+use backend_core::configuration::{get_configuration, DatabaseSettings};
+use backend_core::startup::{get_connection_pool, Application};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -27,6 +27,7 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 /// database state directly when asserting side effects.
 /// `email_server` allows interception of emails directed to i.e PostMark
 pub struct TestApp {
+    pub port: u16,
     pub address: String,
     pub db_pool: PgPool,
     pub email_server: MockServer,
@@ -72,13 +73,14 @@ pub async fn spawn_app() -> TestApp {
         .await
         .expect("Failed to build application.");
 
-    // retrieve port before spawning application
-    let address = format!("http://127.0.0.1:{}", application.port());
+    let application_port = application.port();
+    let address = format!("http://127.0.0.1:{}", application_port);
 
     #[allow(clippy::let_underscore_future)]
     let _ = tokio::spawn(application.run_until_stopped());
 
     TestApp {
+        port: application_port,
         address,
         db_pool: get_connection_pool(&configuration.database),
         email_server,

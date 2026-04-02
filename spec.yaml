@@ -1,3 +1,5 @@
+# Digital ocean spec file, on change run $ doctl apps update $APP_ID --spec spec.yaml
+
 name: backend-core
 
 region: fra1
@@ -22,6 +24,9 @@ services:
       - path: /
 
     envs:
+      - key: APP_APPLICATION__BASE_URL
+        scope: RUN_TIME
+        value: ${APP_URL}
       - key: APP_DATABASE__USERNAME
         scope: RUN_TIME
         value: ${backendcore-db.USERNAME}
