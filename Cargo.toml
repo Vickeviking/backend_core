@@ -15,6 +15,8 @@ actix-web = "4.12.1"
 chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
 config = "0.15.19"
 claims = "0.8"
+# used for PRNG token generation
+rand = { version = "0.9", features = ["std_rng"]}
 serde = {version = "1", features = ["derive"]}
 serde-aux = "4"
 secrecy = { version = "0.10.3", features = ["serde"]}
