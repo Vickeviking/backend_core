@@ -58,6 +58,23 @@ Cargo tools:
 
   lnav /tmp/test.jsonl
 
+  ## Error handling
+
+  ### thiserror
+
+  User might want to handle the error and match on it, build error enums with
+  thiserror for less boilerplate,
+
+  ### anyhow
+
+  If end-user dont want to match on error and just want some context, use anyhow to enrich error
+  with context.
+
+  A mix can be used if we want a few error types to match on, and an opaque other error with attached context.
+
+  Errors should be logged when handeled, if propagating upwards with '?' logging the error will cause duplicates
+  and a harder time debugging and reading logs. It can if it makes sence add more context to it tough.
+
   ### Docker
   - build:
     docker build --tag backend_core --file Dockerfile .
