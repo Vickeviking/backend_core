@@ -42,9 +42,21 @@ Cargo tools:
 
   tracing spans are used, with different layers and json formatting, ElasticSearch could be used to query loggs
 
+  ## The best way to use
+
+  cutting out sqlx logs
+  RUST_LOG="sqlx=error,info" TEST_LOG=true cargo t subscriber_fails_if_there_is_a_fatal_database_error | bunyan
+
   ## observe test logs
 
   TEST_LOG=true cargo test health_check_works | bunyan
+
+  ## lnav with clean json logs, cumbersome to use, but perhaps usefull for a bigger log?
+
+  cargo t subscriber_fails_if_there_is_a_fatal_database_error \
+   | jq -Rrc 'fromjson? | select(.)' > /tmp/test.jsonl
+
+  lnav /tmp/test.jsonl
 
   ### Docker
   - build:
