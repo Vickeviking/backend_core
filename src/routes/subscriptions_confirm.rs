@@ -2,6 +2,9 @@ use actix_web::{HttpResponse, web};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+//TODO: Implement similar error handling as in routes/subscriptions.rs, check dev.md for guidance
+//under error handling
+
 #[derive(serde::Deserialize)]
 pub struct Parameters {
     subscription_token: String,
