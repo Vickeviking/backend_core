@@ -1,7 +1,7 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use chrono::Utc;
 use rand::distr::Alphanumeric;
-use rand::{rng, Rng};
+use rand::{Rng, rng};
 use sqlx::PgPool;
 use sqlx::{Executor, Postgres, Transaction};
 use unicode_segmentation::UnicodeSegmentation;
