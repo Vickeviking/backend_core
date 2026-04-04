@@ -70,12 +70,12 @@ mod tests {
     use crate::domain::SubscriberEmail;
     use crate::email_client::EmailClient;
     use claims::{assert_err, assert_ok};
+    use fake::Fake;
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::{Paragraph, Sentence};
-    use fake::Fake;
     use secrecy::SecretString;
-    use wiremock::matchers::{any, header, header_exists, method, path};
     use wiremock::Request;
+    use wiremock::matchers::{any, header, header_exists, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     struct SendEmailBodyMatcher;

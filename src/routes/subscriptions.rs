@@ -1,9 +1,9 @@
 use actix_web::http::StatusCode;
-use actix_web::{web, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, web};
 use anyhow::Context;
 use chrono::Utc;
 use rand::distr::Alphanumeric;
-use rand::{rng, Rng};
+use rand::{Rng, rng};
 use sqlx::PgPool;
 use sqlx::{Executor, Postgres, Transaction};
 use unicode_segmentation::UnicodeSegmentation;
