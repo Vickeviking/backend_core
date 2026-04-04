@@ -28,7 +28,7 @@ impl EmailClient {
 
     pub async fn send_email(
         &self,
-        recipient: SubscriberEmail,
+        recipient: &SubscriberEmail,
         subject: &str,
         html_content: &str,
         text_content: &str,
@@ -70,12 +70,12 @@ mod tests {
     use crate::domain::SubscriberEmail;
     use crate::email_client::EmailClient;
     use claims::{assert_err, assert_ok};
-    use fake::Fake;
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::{Paragraph, Sentence};
+    use fake::Fake;
     use secrecy::SecretString;
-    use wiremock::Request;
     use wiremock::matchers::{any, header, header_exists, method, path};
+    use wiremock::Request;
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     struct SendEmailBodyMatcher;
@@ -147,7 +147,7 @@ mod tests {
 
         //Act
         let _ = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
 
         //Assert
@@ -167,7 +167,7 @@ mod tests {
 
         //Act
         let outcome = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
 
         //Assert
@@ -188,7 +188,7 @@ mod tests {
 
         //Act
         let outcome = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
 
         //Assert
@@ -212,7 +212,7 @@ mod tests {
 
         // Act
         let outcome = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
 
         // Assert
