@@ -2,9 +2,9 @@ use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
 use crate::routes::{confirm, health_check, publish_newsletter, subscribe};
 use actix_web::dev::Server;
-use actix_web::{web, App, HttpServer};
-use sqlx::postgres::PgPoolOptions;
+use actix_web::{App, HttpServer, web};
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
