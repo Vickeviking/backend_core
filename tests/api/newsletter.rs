@@ -1,4 +1,4 @@
-use crate::helpers::{ConfirmationLinks, TestApp, spawn_app};
+use crate::helpers::{spawn_app, ConfirmationLinks, TestApp};
 use wiremock::matchers::{any, method, path};
 use wiremock::{Mock, ResponseTemplate};
 
@@ -28,7 +28,7 @@ async fn requests_missing_authorization_are_rejected() {
 }
 
 #[tokio::test]
-async fn newsletter_are_not_delivered_to_unconfirmed_subscribers() {
+async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
     //Arrange
     let app = spawn_app().await;
     create_unconfirmed_subscriber(&app).await;
@@ -87,7 +87,7 @@ async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
 }
 
 #[tokio::test]
-async fn newsletter_are_delivered_to_confirmed_subscribers() {
+async fn newsletters_are_delivered_to_confirmed_subscribers() {
     //Arrange
     let app = spawn_app().await;
     create_confirmed_subscriber(&app).await;
