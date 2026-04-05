@@ -1,5 +1,8 @@
-use backend_core::configuration::{DatabaseSettings, get_configuration};
-use backend_core::startup::{Application, get_connection_pool};
+use argon2::password_hash::SaltString;
+use argon2::password_hash::rand_core::OsRng;
+use argon2::{Argon2, PasswordHasher};
+use backend_core::configuration::{get_configuration, DatabaseSettings};
+use backend_core::startup::{get_connection_pool, Application};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -22,6 +25,43 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     }
 });
 
+pub struct TestUser {
+    pub user_id: Uuid,
+    pub username: String,
+    pub password: String,
+}
+
+impl TestUser {
+    pub fn generate() -> Self {
+        Self {
+            user_id: Uuid::new_v4(),
+            username: Uuid::new_v4().to_string(),
+            password: Uuid::new_v4().to_string(),
+        }
+    }
+
+    async fn store(&self, pool: &PgPool) {
+        let salt = SaltString::generate(&mut OsRng);
+        let password_hash = Argon2::default()
+            .hash_password(self.password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO users (user_id, username, password_hash)
+            VALUES ($1, $2, $3)
+            "#,
+            self.user_id,
+            self.username,
+            password_hash
+        )
+        .execute(pool)
+        .await
+        .expect("Failed to store test user.");
+    }
+}
+
 /// Handles exposed to each integration test after booting the application.
 /// `address` is the HTTP base URL, while `db_pool` lets tests inspect the
 /// database state directly when asserting side effects.
@@ -31,6 +71,7 @@ pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
     pub email_server: MockServer,
+    test_user: TestUser,
 }
 
 /// Confirmation links embedded in the request to the email API.
@@ -41,10 +82,9 @@ pub struct ConfirmationLinks {
 
 impl TestApp {
     pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
-        let (username, password) = self.test_user().await;
         reqwest::Client::new()
             .post(format!("{}/newsletters", &self.address))
-            .basic_auth(username, Some(password))
+            .basic_auth(&self.test_user.username, Some(&self.test_user.password))
             .json(&body)
             .send()
             .await
@@ -83,15 +123,6 @@ impl TestApp {
         let html = get_link(body["HtmlBody"].as_str().unwrap());
         let plain_text = get_link(body["TextBody"].as_str().unwrap());
         ConfirmationLinks { html, plain_text }
-    }
-
-    /// Retrieve username and password
-    pub async fn test_user(&self) -> (String, String) {
-        let row = sqlx::query!("SELECT username, password FROM users LIMIT 1",)
-            .fetch_one(&self.db_pool)
-            .await
-            .expect("Failed to retrieve test users");
-        (row.username, row.password)
     }
 }
 
@@ -134,22 +165,10 @@ pub async fn spawn_app() -> TestApp {
         address,
         db_pool: get_connection_pool(&configuration.database),
         email_server,
+        test_user: TestUser::generate(),
     };
-
-    add_test_user(&test_app.db_pool).await;
+    test_app.test_user.store(&test_app.db_pool).await;
     test_app
-}
-
-async fn add_test_user(pool: &PgPool) {
-    sqlx::query!(
-        "INSERT INTO users (user_id, username, password) VALUES ($1, $2, $3)",
-        Uuid::new_v4(),
-        Uuid::new_v4().to_string(),
-        Uuid::new_v4().to_string(),
-    )
-    .execute(pool)
-    .await
-    .expect("Failed to create test user");
 }
 
 /// Creates a brand-new database for the current test and runs migrations.
