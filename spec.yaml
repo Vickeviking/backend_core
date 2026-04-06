@@ -1,4 +1,11 @@
 # Digital ocean spec file, on change run $ doctl apps update $APP_ID --spec spec.yaml
+#
+#
+# Digital ocean does not support redis cluster via spec.yaml,
+# a manual flow trough dashbord is needed to create a `redis cluster`, select same datacenter for where
+# application is deployed for obvious reasons
+# After "get started flow" a connection string will be given, embedding a username and password,
+# Inject via env var , read p.394 zero to production for more info.
 
 name: backend-core
 
@@ -16,7 +23,7 @@ services:
       http_path: /health_check
     # should match configuration/production.yaml
     http_port: 8000
-    # here we can scale up, but to keep bill low , keep at 1
+    # here we can scale up, but to keep bill low , keep at 1, atleast 2 for prod
     instance_count: 1
     instance_size_slug: basic-xxs
 
