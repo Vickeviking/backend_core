@@ -3,6 +3,8 @@ use crate::email_client::EmailClient;
 use crate::routes::{
     confirm, health_check, home, login, login_form, publish_newsletter, subscribe,
 };
+use actix_session::SessionMiddleware;
+use actix_session::storage::RedisSessionStore;
 use actix_web::cookie::Key;
 use actix_web::dev::Server;
 use actix_web::{App, HttpServer, web};
@@ -33,7 +35,7 @@ impl Application {
     /// Builds the application from [`Settings`] and binds its TCP listener.
     /// This creates the database pool and email client, then delegates to
     /// [`run`] to construct the Actix server with those dependencies.
-    pub async fn build(configuration: Settings) -> Result<Self, std::io::Error> {
+    pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
 
         let sender_email = configuration
@@ -61,7 +63,9 @@ impl Application {
             email_client,
             configuration.application.base_url,
             configuration.application.hmac_secret,
-        )?;
+            configuration.redis_uri,
+        )
+        .await?;
 
         Ok(Self { port, server })
     }
@@ -87,23 +91,29 @@ pub struct ApplicationBaseUrl(pub String);
 /// Constructs and starts the HTTP server from pre-built infrastructure.
 /// Keeping this separate from [`Application::build`] lets tests inject
 /// their own listener, database pool, and email client when needed.
-pub fn run(
+async fn run(
     listener: TcpListener,
     db_pool: PgPool,
     email_client: EmailClient,
     base_url: String,
     hmac_secret: SecretString,
-) -> Result<Server, std::io::Error> {
+    redis_uri: SecretString,
+) -> Result<Server, anyhow::Error> {
     let db_pool = web::Data::new(db_pool);
     let email_client = web::Data::new(email_client);
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
     let hmac_secret = web::Data::new(hmac_secret);
-    let message_store =
-        CookieMessageStore::builder(Key::from(hmac_secret.expose_secret().as_bytes())).build();
+    let secret_key = Key::from(hmac_secret.expose_secret().as_bytes());
+    let message_store = CookieMessageStore::builder(secret_key.clone()).build();
+    let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let message_framework = FlashMessagesFramework::builder(message_store).build();
     let server = HttpServer::new(move || {
         App::new()
             .wrap(message_framework.clone())
+            .wrap(SessionMiddleware::new(
+                redis_store.clone(),
+                secret_key.clone(),
+            ))
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))

@@ -25,6 +25,9 @@ Cargo tools:
 
   $dbeaver to open graphical view of database
 
+  run a redis instance with $./scripts/init_redis.sh
+  docker ps to see if running, no SKIP_DOCKER available here as of now
+
   # Before commit
 
   cargo fmt
@@ -33,6 +36,8 @@ Cargo tools:
   cargo audit
   cargo sqlx prepare --workspace -- --all-targets
   cargo sqlx prepare --workspace --check
+
+  ./scripts/ci-check.sh (To check a few of the above stuff)
 
   # manual http fire
 
@@ -80,3 +85,18 @@ Cargo tools:
     docker build --tag backend_core --file Dockerfile .
   - run:
     docker run -p 8000:8000 backend_core
+
+# Dev
+
+Need to run
+$ ./scripts/init_db.sh
+$ ./scripts/init_redis.sh
+Then either via cargo watch, simpler for dev
+$ cargo watch -x check -x test -x run
+Or
+$ docker run (i think, need to double check)
+
+# prod
+
+the digital ocean cli can be used with spec.yaml,
+redis has to be set up seperately with their dashbord
