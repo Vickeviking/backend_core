@@ -1,8 +1,8 @@
-use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
+use argon2::password_hash::rand_core::OsRng;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use backend_core::configuration::{get_configuration, DatabaseSettings};
-use backend_core::startup::{get_connection_pool, Application};
+use backend_core::configuration::{DatabaseSettings, get_configuration};
+use backend_core::startup::{Application, get_connection_pool};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -131,7 +131,7 @@ impl TestApp {
 
     pub async fn get_admin_dashboard(&self) -> reqwest::Response {
         self.api_client
-            .get(&format!("{}/admin/dashboard", &self.address))
+            .get(format!("{}/admin/dashboard", &self.address))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -139,6 +139,30 @@ impl TestApp {
 
     pub async fn get_admin_dashboard_html(&self) -> String {
         self.get_admin_dashboard().await.text().await.unwrap()
+    }
+
+    pub async fn get_change_password(&self) -> reqwest::Response {
+        self.api_client
+            .get(format!("{}/admin/password", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn get_change_password_html(&self) -> String {
+        self.get_change_password().await.text().await.unwrap()
+    }
+
+    pub async fn post_change_password<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
+        self.api_client
+            .post(format!("{}/admin/password", &self.address))
+            .form(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
     }
 
     /// Extract the confirmation links embedded in the request to the email API.
