@@ -1,8 +1,8 @@
-use argon2::password_hash::SaltString;
 use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use backend_core::configuration::{DatabaseSettings, get_configuration};
-use backend_core::startup::{Application, get_connection_pool};
+use backend_core::configuration::{get_configuration, DatabaseSettings};
+use backend_core::startup::{get_connection_pool, Application};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -105,6 +105,21 @@ impl TestApp {
             .expect("Failed to send request")
     }
 
+    pub async fn post_login<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
+        reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .unwrap()
+            .post(format!("{}/login", &self.address))
+            .form(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
     /// Extract the confirmation links embedded in the request to the email API.
     pub fn get_confirmation_links(&self, email_request: &wiremock::Request) -> ConfirmationLinks {
         let body: serde_json::Value = serde_json::from_slice(&email_request.body).unwrap();
@@ -128,6 +143,11 @@ impl TestApp {
         let plain_text = get_link(body["TextBody"].as_str().unwrap());
         ConfirmationLinks { html, plain_text }
     }
+}
+
+pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
+    assert_eq!(response.status().as_u16(), 303);
+    assert_eq!(response.headers().get("Location").unwrap(), location);
 }
 
 /// Boots a fresh application instance for one integration test.
