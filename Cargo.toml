@@ -12,6 +12,7 @@ name = "backend_core"
 
 [dependencies]
 actix-web = "4.12.1"
+actix-web-flash-messages = { version = "0.4", features = ["cookies"]}
 anyhow = "1"
 argon2 = { version = "0.5.3", features = ["std"] }
 base64 = "0.22.1"
@@ -39,9 +40,6 @@ tracing-log = "0.1"
 tracing-actix-web = "=0.7.5"
 thiserror = "1"
 htmlescape = "0.3"
-hex = "0.4"
-hmac = { version = "0.12", features = ["std"]}
-sha2 = "0.10"
 uuid = { version = "1", features = ["v4"] }
 unicode-segmentation = "1"
 urlencoding = "2"

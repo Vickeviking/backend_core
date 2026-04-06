@@ -1,13 +1,13 @@
-use crate::authentication::{validate_credentials, AuthError, Credentials};
+use crate::authentication::{AuthError, Credentials, validate_credentials};
 use crate::domain::SubscriberEmail;
 use crate::email_client::EmailClient;
 use crate::routes::error_chain_fmt;
-use actix_web::http::header::{self, HeaderMap, HeaderValue};
-use actix_web::http::StatusCode;
-use actix_web::web;
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::ResponseError;
+use actix_web::http::StatusCode;
+use actix_web::http::header::{self, HeaderMap, HeaderValue};
+use actix_web::web;
 use anyhow::Context;
 use base64::Engine;
 use secrecy::SecretString;
