@@ -11,9 +11,9 @@ path = "src/main.rs"
 name = "backend_core"
 
 [dependencies]
-actix-web = "4.12.1"
-actix-web-flash-messages = { version = "0.4", features = ["cookies"]}
-actix-session = {version="0.7", features=["redis-rs-tls-session"]}
+actix-web = "4.13.0"
+actix-web-flash-messages = { version = "0.5", features = ["cookies"]}
+actix-session = {version="0.11.0", features=["redis-session-rustls"]}
 anyhow = "1"
 argon2 = { version = "0.5.3", features = ["std"] }
 base64 = "0.22.1"
@@ -33,7 +33,7 @@ sqlx = { version = "0.8", default-features = false, features = [
   "chrono",
   "migrate",
 ] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"]}
+tokio = { version = "1.51", features = ["macros", "rt-multi-thread"]}
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"]}
 tracing-bunyan-formatter = "0.3"
@@ -41,7 +41,7 @@ tracing-log = "0.1"
 tracing-actix-web = "=0.7.5"
 thiserror = "1"
 htmlescape = "0.3"
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 unicode-segmentation = "1"
 urlencoding = "2"
 validator = "0.20"
