@@ -1,8 +1,8 @@
-use argon2::password_hash::SaltString;
 use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use backend_core::configuration::{DatabaseSettings, get_configuration};
-use backend_core::startup::{Application, get_connection_pool};
+use backend_core::configuration::{get_configuration, DatabaseSettings};
+use backend_core::startup::{get_connection_pool, Application};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -121,6 +121,17 @@ impl TestApp {
     pub async fn get_login_html(&self) -> String {
         self.api_client
             .get(format!("{}/login", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .text()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_admin_dashboard_html(&self) -> String {
+        self.api_client
+            .get(format!("{}/admin/dashboard", &self.address))
             .send()
             .await
             .expect("Failed to execute request.")
