@@ -1,5 +1,5 @@
 use crate::routes::error_chain_fmt;
-use actix_web::{http::StatusCode, web, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, http::StatusCode, web};
 use anyhow::Context;
 use sqlx::PgPool;
 use uuid::Uuid;
