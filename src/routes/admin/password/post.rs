@@ -1,8 +1,8 @@
-use crate::authentication::{AuthError, Credentials, validate_credentials};
+use crate::authentication::{reject_anonymous_users, validate_credentials, AuthError, Credentials};
 use crate::routes::admin::dashboard::get_username;
 use crate::session_state::TypedSession;
 use crate::utils::{e500, see_other};
-use actix_web::{HttpResponse, web};
+use actix_web::{web, HttpResponse};
 use actix_web_flash_messages::FlashMessage;
 use secrecy::{ExposeSecret, SecretString};
 use sqlx::PgPool;
@@ -19,17 +19,7 @@ pub async fn change_password(
     session: TypedSession,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let user_id = session.get_user_id().map_err(e500)?;
-
-    if user_id.is_none() {
-        return Ok(see_other("/login"));
-    }
-
-    if session.get_user_id().map_err(e500)?.is_none() {
-        return Ok(see_other("/login"));
-    }
-
-    let user_id = user_id.unwrap();
+    let user_id = reject_anonymous_users(session).await?;
 
     if form.new_password.expose_secret() != form.new_password_check.expose_secret() {
         FlashMessage::error(
