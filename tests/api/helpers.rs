@@ -1,8 +1,8 @@
-use argon2::password_hash::SaltString;
 use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use backend_core::configuration::{DatabaseSettings, get_configuration};
-use backend_core::startup::{Application, get_connection_pool};
+use backend_core::configuration::{get_configuration, DatabaseSettings};
+use backend_core::startup::{get_connection_pool, Application};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -64,6 +64,14 @@ impl TestUser {
         .await
         .expect("Failed to store test user.");
     }
+
+    pub async fn login(&self, app: &TestApp) {
+        app.post_login(&serde_json::json!({
+            "username": &self.username,
+            "password": &self.password
+        }))
+        .await;
+    }
 }
 
 /// Handles exposed to each integration test after booting the application.
@@ -86,15 +94,6 @@ pub struct ConfirmationLinks {
 }
 
 impl TestApp {
-    pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
-        self.api_client
-            .post(format!("{}/admin/newsletters", &self.address))
-            .json(&body)
-            .send()
-            .await
-            .expect("Failed to execute request.")
-    }
-
     pub async fn post_subscription(&self, body: String) -> reqwest::Response {
         self.api_client
             .post(format!("{}/subscriptions", &self.address))
@@ -166,6 +165,30 @@ impl TestApp {
     {
         self.api_client
             .post(format!("{}/admin/password", &self.address))
+            .form(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn get_publish_newsletter(&self) -> reqwest::Response {
+        self.api_client
+            .get(&format!("{}/admin/newsletters", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn get_publish_newsletter_html(&self) -> String {
+        self.get_publish_newsletter().await.text().await.unwrap()
+    }
+
+    pub async fn post_publish_newsletter<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
+        self.api_client
+            .post(&format!("{}/admin/newsletters", &self.address))
             .form(body)
             .send()
             .await
