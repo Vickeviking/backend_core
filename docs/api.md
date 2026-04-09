@@ -53,7 +53,7 @@ Attempts to change the password for the logged-in admin user.
 
 This flow is present in the HTTP surface but is not fully implemented yet in the application code.
 
-### `POST /newsletters`
+### `POST /admin/newsletters`
 
 Publishes a newsletter issue to confirmed subscribers.
 
@@ -69,16 +69,12 @@ Expected JSON payload:
 }
 ```
 
-This endpoint currently uses HTTP Basic Authentication.
+This endpoint requires an authenticated admin session.
 
 ## API Notes
 
-The system currently mixes:
-
-- form-based admin flows backed by sessions
-- a JSON API endpoint backed by Basic Auth
-
-That is acceptable for a small internal service, but it should be documented as an intentional temporary state rather than treated as a final API design.
+The system currently serves form-based admin flows backed by sessions,
+including JSON newsletter publishing under the `/admin` scope.
 
 ## Recommended Next Step
 
