@@ -15,6 +15,7 @@ The repository already includes helper scripts for local setup:
 
 - `scripts/init_db.sh`
 - `scripts/init_redis.sh`
+- `scripts/docker-clean`
 
 ## Basic Flow
 
@@ -32,6 +33,8 @@ Typical commands mentioned elsewhere in the repository include:
 
 - `./scripts/init_db.sh`
 - `./scripts/init_redis.sh`
+- `./scripts/docker-clean`
+- `./scripts/docker-clean --yes`
 - `cargo check`
 - `cargo test`
 - `cargo watch -x check -x test -x run`

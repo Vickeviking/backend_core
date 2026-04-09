@@ -27,6 +27,10 @@ Cargo tools:
 
   run a redis instance with $./scripts/init_redis.sh
   docker ps to see if running, no SKIP_DOCKER available here as of now
+  to wipe local docker state when needed:
+  $ ./scripts/docker-clean
+  for non-interactive use:
+  $ ./scripts/docker-clean --yes
 
   # Before commit
 
