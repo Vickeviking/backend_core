@@ -1,0 +1,80 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+emulate -L zsh
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/docker-clean [--yes]
+
+Stops and removes all Docker containers, removes all volumes, then prunes
+remaining images, networks, and build cache.
+
+Options:
+  -y, --yes   Skip the confirmation prompt
+  -h, --help  Show this help text
+EOF
+}
+
+assume_yes=0
+
+case "${1:-}" in
+  "")
+    ;;
+  -y|--yes)
+    assume_yes=1
+    ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo >&2 "Error: unknown argument '${1}'."
+    usage
+    exit 1
+    ;;
+esac
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo >&2 "Error: docker is not installed."
+  exit 1
+fi
+
+if ! docker info >/dev/null 2>&1; then
+  echo >&2 "Error: docker daemon is not reachable."
+  exit 1
+fi
+
+# Require an explicit opt-in when there is no interactive terminal.
+if [[ -t 0 && ${assume_yes} -eq 0 ]]; then
+  echo "This will remove all Docker containers, volumes, unused images, networks, and build cache."
+  read -q "reply?Continue? [y/N] "
+  echo
+  if [[ ! "${reply:-}" =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+  fi
+elif [[ ${assume_yes} -eq 0 ]]; then
+  echo >&2 "Error: refusing to run non-interactively without --yes."
+  exit 1
+fi
+
+containers=("${(@f)$(docker ps -aq)}")
+if (( ${#containers[@]} > 0 )); then
+  echo "Removing ${#containers[@]} container(s)..."
+  docker rm -f "${containers[@]}" >/dev/null
+else
+  echo "No containers to remove."
+fi
+
+volumes=("${(@f)$(docker volume ls -q)}")
+if (( ${#volumes[@]} > 0 )); then
+  echo "Removing ${#volumes[@]} volume(s)..."
+  docker volume rm "${volumes[@]}" >/dev/null
+else
+  echo "No volumes to remove."
+fi
+
+echo "Pruning remaining Docker data..."
+docker system prune -a --volumes -f >/dev/null
+
+echo "Docker cleanup complete."
