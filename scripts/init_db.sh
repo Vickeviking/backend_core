@@ -27,6 +27,8 @@ DB_NAME="${POSTGRES_DB:=backend_core}"
 DB_PORT="${POSTGRES_PORT:=5432}"
 # Check if a custom host has been set otherwise set to localhost
 DB_HOST="${POSTGRES_HOST:=localhost}"
+# Give Postgres more shared memory to avoid migration failures in parallel tests
+DB_SHM_SIZE="${POSTGRES_SHM_SIZE:=256m}"
 
 # Allow to skip docker if a dockerized postgres database is already running
 if [[ -z "${SKIP_DOCKER}" ]]
@@ -35,6 +37,7 @@ then
     -e POSTGRES_USER=${DB_USER} \
     -e POSTGRES_PASSWORD=${DB_PASSWORD} \
     -e POSTGRES_DB=${DB_NAME} \
+    --shm-size="${DB_SHM_SIZE}" \
     -p "${DB_PORT}":5432 \
     -d postgres \
     postgres -N 1000

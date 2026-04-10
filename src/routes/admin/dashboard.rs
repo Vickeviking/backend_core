@@ -1,7 +1,7 @@
 use crate::authentication::UserId;
 use crate::utils::e500;
 use actix_web::http::header::ContentType;
-use actix_web::{web, HttpResponse};
+use actix_web::{HttpResponse, web};
 use anyhow::Context;
 use sqlx::PgPool;
 use uuid::Uuid;

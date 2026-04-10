@@ -6,17 +6,17 @@ use crate::routes::{
     health_check, home, login, login_form, subscribe,
 };
 use crate::routes::{log_out, publish_newsletter_form};
-use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
+use actix_session::storage::RedisSessionStore;
 use actix_web::cookie::Key;
 use actix_web::dev::Server;
 use actix_web::middleware::from_fn;
-use actix_web::{web, App, HttpServer};
-use actix_web_flash_messages::storage::CookieMessageStore;
+use actix_web::{App, HttpServer, web};
 use actix_web_flash_messages::FlashMessagesFramework;
+use actix_web_flash_messages::storage::CookieMessageStore;
 use secrecy::{ExposeSecret, SecretString};
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
@@ -41,18 +41,7 @@ impl Application {
     /// [`run`] to construct the Actix server with those dependencies.
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
-
-        let sender_email = configuration
-            .email_client
-            .sender()
-            .expect("Invalid sender email.");
-        let timeout = configuration.email_client.timeout();
-        let email_client = EmailClient::new(
-            configuration.email_client.base_url,
-            sender_email,
-            configuration.email_client.authorization_token,
-            timeout,
-        );
+        let email_client = configuration.email_client.client();
 
         let address = format!(
             "{}:{}",
