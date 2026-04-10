@@ -60,5 +60,6 @@ linkify = "0.9"
 #prop testing, run test multiple times, and shrinks failing case
 quickcheck = "1"
 quickcheck_macros = "1"
+serde_urlencoded = "0.7.1"
 rand = "0.9" #fake 4.0 needs this version, used by quickcheck aswell
 wiremock = "0.6" #Inercept http request to check target address and headers among others

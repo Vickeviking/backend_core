@@ -1,8 +1,10 @@
-use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
+use argon2::password_hash::rand_core::OsRng;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
-use backend_core::configuration::{get_configuration, DatabaseSettings};
-use backend_core::startup::{get_connection_pool, Application};
+use backend_core::configuration::{DatabaseSettings, get_configuration};
+use backend_core::email_client::EmailClient;
+use backend_core::issue_delivery_worker::{ExecutionOutcome, try_execute_task};
+use backend_core::startup::{Application, get_connection_pool};
 use backend_core::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -83,6 +85,7 @@ pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
     pub email_server: MockServer,
+    pub email_client: EmailClient,
     pub test_user: TestUser,
     pub api_client: reqwest::Client,
 }
@@ -173,7 +176,7 @@ impl TestApp {
 
     pub async fn get_publish_newsletter(&self) -> reqwest::Response {
         self.api_client
-            .get(&format!("{}/admin/newsletters", &self.address))
+            .get(format!("{}/admin/newsletters", &self.address))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -188,7 +191,7 @@ impl TestApp {
         Body: serde::Serialize,
     {
         self.api_client
-            .post(&format!("{}/admin/newsletters", &self.address))
+            .post(format!("{}/admin/newsletters", &self.address))
             .form(body)
             .send()
             .await
@@ -217,6 +220,18 @@ impl TestApp {
         let html = get_link(body["HtmlBody"].as_str().unwrap());
         let plain_text = get_link(body["TextBody"].as_str().unwrap());
         ConfirmationLinks { html, plain_text }
+    }
+
+    pub async fn dispatch_all_pending_emails(&self) {
+        loop {
+            if let ExecutionOutcome::EmptyQueue =
+                try_execute_task(&self.db_pool, &self.email_client)
+                    .await
+                    .unwrap()
+            {
+                break;
+            }
+        }
     }
 }
 
@@ -270,6 +285,7 @@ pub async fn spawn_app() -> TestApp {
         address,
         db_pool: get_connection_pool(&configuration.database),
         email_server,
+        email_client: configuration.email_client.client(),
         test_user: TestUser::generate(),
         api_client: client,
     };
