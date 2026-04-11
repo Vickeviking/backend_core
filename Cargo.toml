@@ -3,12 +3,12 @@ name = "backend_core"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["xtask"]
+resolver = "3"
+
 [lib]
 path = "src/lib.rs"
-
-[[bin]]
-path = "src/main.rs"
-name = "backend_core"
 
 [dependencies]
 actix-web = "4.13.0"

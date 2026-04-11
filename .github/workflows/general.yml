@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   push:
@@ -68,11 +68,11 @@ jobs:
           PGPASSWORD="password" psql -h localhost -U postgres -c "${CREATE_USER}"
           PGPASSWORD="password" psql -h localhost -U postgres -c "${ALTER_USER}"
 
-      - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
+      - name: Prepare database
+        run: SKIP_DOCKER=true cargo xtask db-init
 
       - name: Run tests
-        run: cargo test
+        run: cargo test --all-targets
 
       - name: Check sqlx queries are fresh
         run: cargo sqlx prepare --workspace --check -- --all-targets
@@ -91,7 +91,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Enforce formatting
-        run: cargo fmt --check
+        run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
@@ -109,7 +109,32 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Lint
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: apps/web
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: apps/web
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: apps/web
 
   coverage:
     name: Code coverage
@@ -164,8 +189,8 @@ jobs:
           PGPASSWORD="password" psql -h localhost -U postgres -c "${CREATE_USER}"
           PGPASSWORD="password" psql -h localhost -U postgres -c "${ALTER_USER}"
 
-      - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
+      - name: Prepare database
+        run: SKIP_DOCKER=true cargo xtask db-init
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov

@@ -1,2 +1,9 @@
 /target
-todo.md
+/apps/web/node_modules
+/apps/web/dist
+/apps/web/.vite
+/apps/web/.DS_Store
+.env
+.env.*
+!.env.example
+*.tsbuildinfo

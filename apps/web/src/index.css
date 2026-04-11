@@ -1,0 +1,95 @@
+:root {
+  --color-paper: #f4f1ed;
+  --color-paper-deep: #ece7e2;
+  --color-ink: #1a1e2b;
+  --color-muted: #5a6278;
+  --color-panel-border: rgba(34, 44, 72, 0.14);
+  --color-link: #1f4f8a;
+  --font-heading: 'Baskerville', 'Times New Roman', serif;
+  --font-body: 'Trebuchet MS', 'Gill Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at top left, rgba(217, 79, 69, 0.2), transparent 26rem),
+    radial-gradient(circle at bottom right, rgba(33, 101, 173, 0.16), transparent 24rem),
+    linear-gradient(180deg, var(--color-paper), var(--color-paper-deep));
+  font-family: var(--font-body);
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(26, 30, 43, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 30, 43, 0.024) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 92%);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+code {
+  font-family: var(--font-mono);
+  padding: 0.18rem 0.42rem;
+  border-radius: 0.45rem;
+  background: rgba(31, 79, 138, 0.11);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+
+h1 {
+  font-size: clamp(2.1rem, 3.8vw, 3.4rem);
+  line-height: 1;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 1.8vw, 2.1rem);
+  line-height: 1.08;
+}
+
+p,
+li {
+  font-size: 1rem;
+}

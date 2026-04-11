@@ -62,8 +62,8 @@ main() {
   export CARGO_TERM_COLOR="${CARGO_TERM_COLOR:-always}"
 
   echo
-  echo "Starting cargo watch. Failed tests will open an inspection menu before the watch loop idles."
-  exec cargo watch -c "$@" -x check -s "./scripts/dev/dev_cycle.sh"
+  echo "Starting API cargo watch. Failed tests will open an inspection menu before the watch loop idles."
+  exec cargo watch -c "$@" -x check -s "./scripts/dev/api_cycle.sh"
 }
 
 main "$@"
