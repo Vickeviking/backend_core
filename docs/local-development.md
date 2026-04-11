@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes how to run the project locally and what supporting services are required.
+This document describes the shortest path to a working local environment.
 
 ## Required Services
 
@@ -11,11 +11,7 @@ The backend depends on:
 - PostgreSQL
 - Redis
 
-The repository already includes helper scripts for local setup:
-
-- `scripts/init_db.sh`
-- `scripts/init_redis.sh`
-- `scripts/docker-clean`
+The repository now also includes a frontend app in `apps/web`.
 
 ## Basic Flow
 
@@ -23,24 +19,42 @@ The expected local workflow is:
 
 1. start PostgreSQL
 2. start Redis
-3. run migrations
+3. install frontend dependencies
 4. run the application
 5. run tests and checks
 
 ## Common Commands
 
-Typical commands mentioned elsewhere in the repository include:
+Primary commands:
+
+- `cargo xtask dev`
+- `cargo xtask ci`
+- `cargo xtask db-init`
+- `cargo xtask redis-init`
+- `cargo run --bin api`
+- `cargo run --bin worker`
+- `npm run dev` in `apps/web`
+
+Legacy fallback wrappers:
 
 - `./scripts/init_db.sh`
 - `./scripts/init_redis.sh`
+- `./scripts/ci-check.sh`
 - `./scripts/docker-clean`
 - `./scripts/docker-clean --yes`
-- `cargo check`
-- `cargo test`
-- `cargo watch -x check -x test -x run`
-- `./scripts/ci-check.sh`
 
-## Environment and Configuration
+## Recommended Flow
+
+1. `cargo xtask db-init`
+2. `cargo xtask redis-init`
+3. `cargo xtask dev`
+4. `cargo xtask ci`
+
+For SQLx query freshness checks, also run:
+
+- `cargo sqlx prepare --workspace --check -- --all-targets`
+
+## Environment And Configuration
 
 Configuration is read from:
 
@@ -50,8 +64,13 @@ Configuration is read from:
 
 For local development, the application defaults to the local environment unless `APP_ENVIRONMENT` is explicitly set.
 
-## Developer Expectations
+## Current Runtime Shape
 
-At the moment, local setup knowledge is spread across `dev.md`, scripts, and source code. This file should become the canonical local onboarding document over time.
+Today the backend is split into:
 
-The long-term goal is that a new developer can clone the repository, read this file, and successfully run the service without needing tribal knowledge.
+- `api` for the HTTP server
+- `worker` for the newsletter delivery loop
+
+The frontend developer shell runs from `apps/web`.
+
+Longer-form workflow notes and command references live in `docs/development.md`.

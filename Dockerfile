@@ -22,7 +22,7 @@ COPY . .
 ENV SQLX_OFFLINE true
 
 #Build project
-RUN cargo build --release --bin backend_core
+RUN cargo build --release --bin api --bin worker
 
 # Runtime stage
 FROM debian:sid-slim AS runtime
@@ -35,11 +35,15 @@ RUN apt-get update -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# copy over compiled binary from builder phase
-COPY --from=builder /app/target/release/backend_core backend_core
+# copy over compiled binaries from builder phase
+COPY --from=builder /app/target/release/api /app/api
+COPY --from=builder /app/target/release/worker /app/worker
 
 # copy over sourcefile dependencies, such as configuration file
 COPY configuration configuration
+COPY scripts/docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 ENV APP_ENVIRONMENT production
-ENTRYPOINT ["./backend_core"]
+ENV APP_RUNTIME api
+ENTRYPOINT ["./entrypoint.sh"]

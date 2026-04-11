@@ -2,56 +2,39 @@
 
 ## Purpose
 
-This document explains the current testing strategy and the intended direction as the project evolves.
+This document explains the current testing structure and the checks expected during development.
 
-## Current Testing Style
+## Current Structure
 
-The project currently uses a useful mix of:
+The repository uses:
 
-- unit tests for domain validation
-- integration tests that boot the application
+- co-located unit tests inside feature and shared modules
+- a single integration test crate rooted at `tests/integration/main.rs`
+- support modules in `tests/integration/support/`
+- HTTP flow coverage in `tests/integration/http/`
+- worker and queue behavior coverage in `tests/integration/worker/`
 - mocked external email delivery using `wiremock`
 
-This is a strong foundation for a service of this size.
+## What The Integration Helpers Own
 
-## What Is Working Well
+The support layer is split by responsibility:
 
-The test suite already exercises full request flows such as:
+- app boot and isolated database setup
+- authenticated test users
+- newsletter and subscription fixtures
+- bounded worker execution helpers
 
-- subscription creation
-- confirmation flow
-- admin login
-- newsletter publishing behavior
+The worker helpers intentionally drain the queue with bounded iterations instead of spawning the infinite production loop inside tests.
 
-This is valuable because it tests behavior through the public API instead of only testing implementation details.
+## Current Commands
 
-## Intended Testing Layers
+- `cargo test`
+- `cargo xtask ci`
+- `cargo sqlx prepare --workspace --check -- --all-targets`
+- `npm run lint` in `apps/web`
 
-As the codebase is refactored, tests should be organized around three layers:
-
-### Domain Tests
-
-These verify pure business rules and validation logic without HTTP, database, or network dependencies.
-
-### Application Tests
-
-These verify use-case behavior, such as subscribing a user or publishing an issue, against mocked repositories or services.
-
-### Integration Tests
-
-These verify wiring, persistence, routing, middleware, authentication boundaries, and infrastructure behavior through the real application surface.
-
-## Testing Rule of Thumb
+## Testing Rule Of Thumb
 
 If a rule can be tested without a server, database, or network, it should usually be tested that way first.
 
 If a behavior depends on routing, middleware, SQL queries, sessions, or external APIs, it should also have integration coverage.
-
-## Future Additions
-
-As the product grows, the test strategy should likely expand to include:
-
-- database-focused repository tests
-- contract tests for external providers
-- regression tests for authentication and authorization
-- smoke tests for deployment environments

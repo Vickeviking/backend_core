@@ -6,12 +6,39 @@
 # application is deployed for obvious reasons
 # After "get started flow" a connection string will be given, embedding a username and password,
 # Inject via env var , read p.394 zero to production for more info.
+#
+# Additional runtime secrets are managed outside this checked-in spec:
+# - APP_APPLICATION__HMAC_SECRET
+# - APP_EMAIL_CLIENT__AUTHORIZATION_TOKEN
+# - APP_REDIS_URI
 
 name: backend-core
 
 region: fra1
+envs:
+  - key: APP_ENVIRONMENT
+    scope: RUN_TIME
+    value: production
+  - key: APP_APPLICATION__BASE_URL
+    scope: RUN_TIME
+    value: ${APP_URL}
+  - key: APP_DATABASE__USERNAME
+    scope: RUN_TIME
+    value: ${backendcore-db.USERNAME}
+  - key: APP_DATABASE__PASSWORD
+    scope: RUN_TIME
+    value: ${backendcore-db.PASSWORD}
+  - key: APP_DATABASE__HOST
+    scope: RUN_TIME
+    value: ${backendcore-db.HOSTNAME}
+  - key: APP_DATABASE__PORT
+    scope: RUN_TIME
+    value: ${backendcore-db.PORT}
+  - key: APP_DATABASE__DATABASE_NAME
+    scope: RUN_TIME
+    value: ${backendcore-db.DATABASE}
 services:
-  - name: backend-core
+  - name: api
     #relative to repo root
     dockerfile_path: Dockerfile
     source_dir: .
@@ -31,24 +58,23 @@ services:
       - path: /
 
     envs:
-      - key: APP_APPLICATION__BASE_URL
+      - key: APP_RUNTIME
         scope: RUN_TIME
-        value: ${APP_URL}
-      - key: APP_DATABASE__USERNAME
+        value: api
+workers:
+  - name: worker
+    dockerfile_path: Dockerfile
+    source_dir: .
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: Vickeviking/backend_core
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    envs:
+      - key: APP_RUNTIME
         scope: RUN_TIME
-        value: ${backendcore-db.USERNAME}
-      - key: APP_DATABASE__PASSWORD
-        scope: RUN_TIME
-        value: ${backendcore-db.PASSWORD}
-      - key: APP_DATABASE__HOST
-        scope: RUN_TIME
-        value: ${backendcore-db.HOSTNAME}
-      - key: APP_DATABASE__PORT
-        scope: RUN_TIME
-        value: ${backendcore-db.PORT}
-      - key: APP_DATABASE__DATABASE_NAME
-        scope: RUN_TIME
-        value: ${backendcore-db.DATABASE}
+        value: worker
 
 databases:
   #Postgres
