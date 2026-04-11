@@ -16,12 +16,14 @@ The service currently deals with:
 
 ## Authentication Model
 
-There are currently two authentication styles in the system:
+The current privileged flows use session-based authentication for the admin web surface.
 
-- session-based authentication for the admin web flow
-- HTTP Basic Authentication for newsletter publishing
+The main moving parts are:
 
-This is acceptable as a temporary internal-stage design, but it should be reviewed before the product grows or becomes externally accessible.
+- login creates a session-backed admin state
+- middleware protects `/admin/*` routes by rejecting anonymous users
+- logout clears session state
+- password changes require the current password
 
 ## Password Handling
 
@@ -32,7 +34,7 @@ The next security questions are operational:
 - how admin credentials are provisioned
 - how secrets are rotated
 - whether seeded credentials should exist in production-like paths
-- whether password change and logout flows are complete and tested
+- whether password change and logout flows are fully covered during the refactor
 
 ## Secret Management
 
@@ -54,7 +56,7 @@ If this flow becomes business-critical, future hardening may include:
 ## Recommended Security Priorities
 
 1. remove any production-like seeded secrets or credentials from committed defaults
-2. complete and verify password change and logout flows
-3. define a clear authentication strategy for admin operations
+2. keep password change and logout flows regression-tested during the refactor
+3. define a clear long-term authentication and authorization strategy for admin operations
 4. document secret sources and rotation expectations
 5. keep security decisions written down as ADRs when they affect architecture

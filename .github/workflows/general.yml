@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   push:
@@ -15,10 +15,11 @@ env:
   APP_USER: app
   APP_USER_PWD: secret
   APP_DB_NAME: backend_core
+  DATABASE_URL: postgres://app:secret@localhost:5432/backend_core
 
 jobs:
-  test:
-    name: Test
+  ci:
+    name: Primary CI
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -41,6 +42,13 @@ jobs:
           - 6379:6379
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -68,48 +76,18 @@ jobs:
           PGPASSWORD="password" psql -h localhost -U postgres -c "${CREATE_USER}"
           PGPASSWORD="password" psql -h localhost -U postgres -c "${ALTER_USER}"
 
-      - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
+      - name: Prepare database
+        run: SKIP_DOCKER=true cargo xtask db-init
 
-      - name: Run tests
-        run: cargo test
+      - name: Run primary CI flow
+        run: cargo xtask ci
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: apps/web
 
       - name: Check sqlx queries are fresh
         run: cargo sqlx prepare --workspace --check -- --all-targets
-
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Enforce formatting
-        run: cargo fmt --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    env:
-      SQLX_OFFLINE: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: clippy
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Lint
-        run: cargo clippy -- -D warnings
 
   coverage:
     name: Code coverage
@@ -164,8 +142,8 @@ jobs:
           PGPASSWORD="password" psql -h localhost -U postgres -c "${CREATE_USER}"
           PGPASSWORD="password" psql -h localhost -U postgres -c "${ALTER_USER}"
 
-      - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
+      - name: Prepare database
+        run: SKIP_DOCKER=true cargo xtask db-init
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov

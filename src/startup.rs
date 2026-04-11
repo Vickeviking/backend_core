@@ -1,31 +1,23 @@
-use crate::authentication::reject_anonymous_users;
-use crate::configuration::{DatabaseSettings, Settings};
-use crate::email_client::EmailClient;
-use crate::routes::{
-    admin::publish_newsletter, admin_dashboard, change_password, change_password_form, confirm,
-    health_check, home, login, login_form, subscribe,
+use crate::features::authentication::presentation::http::{
+    auth_session, change_password, log_out, login,
 };
-use crate::routes::{log_out, publish_newsletter_form};
+use crate::features::newsletter::presentation::http::publish_newsletter;
+use crate::features::subscriptions::presentation::http::{confirm, subscribe};
+use crate::infrastructure::auth::reject_anonymous_users;
+use crate::infrastructure::config::Settings;
+pub use crate::infrastructure::db::get_connection_pool;
+use crate::operational::http::health_check;
+use crate::shared::email_client::EmailClient;
 use actix_session::SessionMiddleware;
 use actix_session::storage::RedisSessionStore;
 use actix_web::cookie::Key;
 use actix_web::dev::Server;
 use actix_web::middleware::from_fn;
 use actix_web::{App, HttpServer, web};
-use actix_web_flash_messages::FlashMessagesFramework;
-use actix_web_flash_messages::storage::CookieMessageStore;
 use secrecy::{ExposeSecret, SecretString};
 use sqlx::PgPool;
-use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
-
-/// Creates a lazily connected Postgres pool for the configured database.
-/// Production startup and test helpers both reuse this so request handlers
-/// talk to the same database that was configured for that environment.
-pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
-    PgPoolOptions::new().connect_lazy_with(configuration.with_db())
-}
 
 /// Owns the bound HTTP server together with the port it listens on.
 /// The binary awaits it directly, while tests read the assigned port
@@ -97,33 +89,29 @@ async fn run(
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
     let hmac_secret = web::Data::new(hmac_secret);
     let secret_key = Key::from(hmac_secret.expose_secret().as_bytes());
-    let message_store = CookieMessageStore::builder(secret_key.clone()).build();
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
-    let message_framework = FlashMessagesFramework::builder(message_store).build();
     let server = HttpServer::new(move || {
         App::new()
-            .wrap(message_framework.clone())
             .wrap(SessionMiddleware::new(
                 redis_store.clone(),
                 secret_key.clone(),
             ))
             .wrap(TracingLogger::default())
-            .route("/", web::get().to(home))
             .service(
-                web::scope("/admin")
-                    .wrap(from_fn(reject_anonymous_users))
-                    .route("/dashboard", web::get().to(admin_dashboard))
-                    .route("/newsletters", web::get().to(publish_newsletter_form))
-                    .route("/newsletters", web::post().to(publish_newsletter))
-                    .route("/password", web::get().to(change_password_form))
-                    .route("/password", web::post().to(change_password))
-                    .route("/logout", web::post().to(log_out)),
+                web::scope("/api")
+                    .route("/health_check", web::get().to(health_check))
+                    .route("/auth/session", web::get().to(auth_session))
+                    .route("/auth/login", web::post().to(login))
+                    .route("/auth/logout", web::post().to(log_out))
+                    .route("/subscriptions", web::post().to(subscribe))
+                    .route("/subscriptions/confirm", web::get().to(confirm))
+                    .service(
+                        web::scope("/admin")
+                            .wrap(from_fn(reject_anonymous_users))
+                            .route("/newsletters", web::post().to(publish_newsletter))
+                            .route("/password", web::post().to(change_password)),
+                    ),
             )
-            .route("/login", web::get().to(login_form))
-            .route("/login", web::post().to(login))
-            .route("/health_check", web::get().to(health_check))
-            .route("/subscriptions", web::post().to(subscribe))
-            .route("/subscriptions/confirm", web::get().to(confirm))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())

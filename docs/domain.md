@@ -2,14 +2,14 @@
 
 ## Purpose
 
-This service currently models a simple newsletter workflow:
+The current codebase models a simple newsletter workflow:
 
 - a visitor subscribes
 - the subscription must be confirmed
 - an admin logs in
 - the admin publishes a newsletter issue to confirmed subscribers
 
-Even though the product is still small, the domain should be described explicitly. Clear language now will reduce refactor cost later.
+Even though the product is still small, the domain should be described explicitly. The naming stays newsletter-focused for now, while the architecture is being prepared for broader product use later.
 
 ## Core Concepts
 
@@ -36,8 +36,9 @@ An admin user can authenticate and trigger privileged actions such as newsletter
 
 ### Newsletter Issue
 
-A newsletter issue is a message prepared for delivery to confirmed subscribers. Today it contains a title and two body formats:
+A newsletter issue is a message prepared for delivery to confirmed subscribers. Today it contains:
 
+- a title
 - HTML content
 - plain text content
 
@@ -54,7 +55,7 @@ These types are important because they prevent invalid values from spreading acr
 
 ## Recommended Domain Improvements
 
-The next step is to turn more business concepts into explicit domain types. Likely candidates are:
+Likely next candidates for explicit domain types are:
 
 - `SubscriptionStatus`
 - `SubscriptionToken`
@@ -63,7 +64,17 @@ The next step is to turn more business concepts into explicit domain types. Like
 - `PlainTextBody`
 - `HtmlBody`
 
-This does not need to become over-engineered. The goal is not to wrap every primitive in a new type. The goal is to make important business rules visible and enforceable.
+The goal is not to wrap every primitive in a new type. The goal is to make important business rules visible and enforceable.
+
+## Product-Neutral Direction
+
+The repository structure should become product-neutral before the domain language does.
+
+That means:
+
+- keep `subscription` and `newsletter` names where they already reflect the current behavior
+- avoid hard-coding those concepts into cross-cutting architecture decisions
+- move toward feature boundaries that can later host additional product capabilities without another structural rewrite
 
 ## Domain Rule Placement
 
