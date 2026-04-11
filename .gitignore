@@ -3,4 +3,7 @@
 /apps/web/dist
 /apps/web/.vite
 /apps/web/.DS_Store
+.env
+.env.*
+!.env.example
 *.tsbuildinfo
