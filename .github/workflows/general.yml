@@ -15,7 +15,6 @@ env:
   APP_USER: app
   APP_USER_PWD: secret
   APP_DB_NAME: backend_core
-  DATABASE_URL: postgres://app:secret@localhost:5432/backend_core
 
 jobs:
   test:
